@@ -37,12 +37,29 @@ workflow {
   DASPER(ch_samples, ch_gtf.collect())    // need 'collect' operator to recycle gtf file for each sample
   //DASPER.out.dasper.view()
 
-  // Filter dasper output
+  // Filter the dasper output
   FILTER_DASPER(DASPER.out.dasper)
   //FILTER_DASPER.out.filtered_dasper.view()
 
+  /* Convert FILTER_DASPER output channel:
+  [S18, /path/to/S18.dasper.tsv.filtered.tsv]
+  [S19, /path/to/S19.dasper.tsv.filtered.tsv]
+  Into a single tuple with 2 elements: first is a list of samples and second is a list of the corresp;onding files.
+  [ [S18, S19], [/path/to/S18.dasper.tsv.filtered.tsv, /path/to/S19.dasper.tsv.filtered.tsv] ]
+  */
+  combined_filter_dasper_output_ch = FILTER_DASPER.out.filtered_dasper.collect()
+    .map { items ->
+        def samples = []
+        def files = []
+        for (int i = 0; i < items.size(); i += 2) {  // Process pairs: every even index is sample, odd index is file
+            samples.add(items[i])
+            files.add(items[i + 1])
+        }
+        [samples, files]
+    }
+
   // Run neojunction on all filtered dasper files
-  NEOJUNCTION(FILTER_DASPER.out.filtered_dasper.collect())
+  NEOJUNCTION(combined_filter_dasper_output_ch)
   //NEOJUNCTION.out.results.view()
 
 }
@@ -89,8 +106,8 @@ process FILTER_DASPER {
   tuple val (sample_id), path (dasper_file), val (library_size)
 
   output:
-  path ("${dasper_file}.filtered.tsv"), emit: filtered_dasper
-  path ("*.out")                      , emit: logs
+  tuple val (sample_id), path ("${dasper_file}.filtered.tsv"), emit: filtered_dasper
+  path ("*.out")                                             , emit: logs
 
   script:
   """
@@ -110,15 +127,20 @@ process NEOJUNCTION {
                   'virushunter/dasper:v1.0.0' }"
 
   input:
-  path ('*')   // collect all filtered.tsv files to this directory
+  tuple val(sample_ids), path(filtered_files) // e.g. [ [S18, S19], [/path/to/S18.dasper.tsv.filtered.tsv, /path/to/S19.dasper.tsv.filtered.tsv] ]
 
   output:
   path ("neojunction_results.tsv"),  emit: results
   path ("*.out"),                    emit: logs
 
   script:
+  /* Create a metadata string like "sample_id,filtered_file\nS19,S19.dasper.tsv.filtered.tsv\nS18,S18.dasper.tsv.filtered.tsv" so bash can output it as a file called metadata.csv for use by neojunction.R script
+  */
+  def metadataRows = sample_ids.withIndex().collect { sample, i -> "${sample},${filtered_files[i]}" }
+  def metadataString = (["sample_id,filtered_file"] + metadataRows).join("\\n")
   """
-  neojunction.R --counts_col ${params.counts_col} &> neojunction.out
+  echo -e "${metadataString}" > metadata.csv
+  neojunction.R --metadata metadata.csv --counts_col ${params.counts_col} &> neojunction.out
   """
 }
 
