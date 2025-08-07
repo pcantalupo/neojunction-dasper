@@ -6,12 +6,16 @@ set.seed(42)
 
 ##################### Options ########################
 opts=list(
-  make_option("--dasperdir", default=".", type="character",
-              help="Directory containing filter_dasper.R outputfiles (default: %default)"),
+  make_option("--metadata", default=NULL, type="character",
+              help="CSV file with columns: sample_id,filtered_file (required)"),
   make_option("--counts_col", default="scaled", type="character",
               help="Column name of the counts (default: %default)")
 )
 params=parse_args(OptionParser(option_list=opts))
+
+if (is.null(params$metadata)) {
+  stop("Error: --metadata is required. Provide a CSV with sample_id and filtered_file columns.")
+}
 
 countcolumn = params$counts_col
 
@@ -26,15 +30,17 @@ neojunctions = c("novel_acceptor", "novel_combo", "novel_donor",
                  "novel_exon_skip", "unannotated", "ambig_gene")
 dasperannots = c(knownjunctions, neojunctions)
 
-
 results  = data.frame()
 
-dasperfilteredfiles = list.files(path = params$dasperdir, pattern = "filtered.tsv", full.names = T)
-file = dasperfilteredfiles[1]
-for (file in dasperfilteredfiles) {
+# Load metadata CSV (sample_id, filtered_file)
+metadata <- read_csv(params$metadata)
+
+for (i in seq_len(nrow(metadata))) {
   
-  message("Calculating neojunction for ", file)
-  
+  sample_id <- metadata$sample_id[i]
+  file <- metadata$filtered_file[i]
+  message("Calculating neojunction for sample: ", sample_id, " (file: ", file, ")")
+
   # Load dasper filtered file
   dasper = read.delim(file) %>% as_tibble()
   
@@ -89,9 +95,7 @@ for (file in dasperfilteredfiles) {
     message("STOP")
   }
   
-  samplename = str_replace(basename(file), ".dasper.tsv.filtered.tsv", "")
-  sums$sample = samplename
-  
+  sums$sample <- sample_id
   results = rbind(results, sums)
 }
 
