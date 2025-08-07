@@ -1,0 +1,38 @@
+name: Nextflow Test (Docker)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test-docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java (required for Nextflow)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Nextflow
+        run: |
+          wget -qO- https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Run test dataset in Docker
+        run: |
+          cd tests
+          nextflow run ../main.nf -profile docker --samplesheet samplesheet.csv --gtf data/chr22.gtf
+
+      - name: Validate output
+        run: |
+          cd tests
+          echo "eccc5881838c6b1b3051878787470409  results/neojunction_results.tsv" > expected.md5
+          md5sum -c expected.md5
+
