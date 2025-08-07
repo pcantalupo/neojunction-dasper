@@ -1,6 +1,8 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
+// testing github actions
+
 workflow {
 
   // Pipeline configuration summary
