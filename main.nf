@@ -2,6 +2,16 @@
 nextflow.enable.dsl=2
 
 workflow {
+  if (params.help) {
+    log.info """
+    Usage:
+      nextflow run main.nf --samplesheet samplesheet.csv --gtf annotations.gtf [--outdir results]
+
+    Samplesheet columns (CSV, header required):
+      sample_id,sj_file,library_size
+    """.stripIndent()
+    exit 0
+  }
 
   // Pipeline configuration summary
   println "\n=== Pipeline Configuration Summary ==="
