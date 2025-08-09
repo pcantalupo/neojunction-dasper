@@ -34,7 +34,7 @@ workflow {
 
 
   // Run dasper on each sample
-  DASPER(ch_samples, ch_gtf.collect())    // need 'collect' operator to recycle gtf file for each sample
+  DASPER(ch_samples.combine(ch_gtf))    // need 'combine' operator to attach it to each sample
   //DASPER.out.dasper.view()
 
   // Filter the dasper output
@@ -76,8 +76,7 @@ process DASPER {
   publishDir "${params.outdir}/${params.dasper_outdir}/outs", pattern: "*.out", mode: 'copy'
 
   input:
-  tuple val (sample_id), path (sj_file), val (library_size)
-  path gtf
+  tuple val (sample_id), path (sj_file), val (library_size), path(gtf)
 
   output:
   tuple val (sample_id), path ("${sample_id}.dasper.tsv"), val (library_size),   emit: dasper
