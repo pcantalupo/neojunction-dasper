@@ -2,23 +2,39 @@
 nextflow.enable.dsl=2
 
 workflow {
+  if (params.help) {
+    log.info """
+    Usage:
+      nextflow run main.nf --samplesheet samplesheet.csv --gtf annotations.gtf [--outdir results]
+
+    Samplesheet columns (CSV, header required):
+      sample_id,sj_file,library_size
+    """.stripIndent()
+    exit 0
+  }
 
   // Pipeline configuration summary
-  println "\n=== Pipeline Configuration Summary ==="
-  println "Command Line       : ${workflow.commandLine}"
-  println "Samplesheet        : ${params.samplesheet}"
-  println "GTF File           : ${params.gtf}"
-  println "Output Dir         : ${params.outdir}"
-  println "Dasper Outdir      : ${params.dasper_outdir}"
-  println "Min Intron         : ${params.min_intron}"
-  println "Max Intron         : ${params.max_intron}"
-  println "Scale Factor       : ${params.scale_factor}"
-  println "Counts Column      : ${params.counts_col}"
-  println "Project Dir        : ${workflow.projectDir}"
-  println "Work Dir           : ${workflow.workDir}"
-  println "PipelineInfo Dir   : ${params.pipeline_info}"
-  println "Container Engine   : ${workflow.containerEngine ?: 'NONE'}"
-  println "=======================================\n\n"
+  def summary = """
+  === Pipeline Configuration Summary ===
+  Command Line       : ${workflow.commandLine}
+  Samplesheet        : ${params.samplesheet}
+  GTF File           : ${params.gtf}
+  Output Dir         : ${params.outdir}
+  Dasper Outdir      : ${params.dasper_outdir}
+  Min Intron         : ${params.min_intron}
+  Max Intron         : ${params.max_intron}
+  Scale Factor       : ${params.scale_factor}
+  Counts Column      : ${params.counts_col}
+  Project Dir        : ${workflow.projectDir}
+  Work Dir           : ${workflow.workDir}
+  PipelineInfo Dir   : ${params.pipeline_info}
+  Container Engine   : ${workflow.containerEngine ?: 'NONE'}
+  Workflow Version   : ${workflow.manifest.version}
+  =======================================
+  """.stripIndent()
+  println "\n${summary}\n"
+  file(params.pipeline_info).mkdirs()   // save params to a file
+  new File("${params.pipeline_info}/run_params.txt").text = summary
 
   // Samplesheet
   if (params.samplesheet) { file(params.samplesheet, checkIfExists: true) }
