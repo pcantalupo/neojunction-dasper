@@ -98,14 +98,14 @@ process FILTER_DASPER {
   tuple val (sample_id), path (dasper_file), val (library_size)
 
   output:
-  tuple val (sample_id), path ("${dasper_file}.filtered.tsv"), emit: filtered_dasper
+  tuple val (sample_id), path ("${sample_id}.dasper.tsv.filtered.tsv"), emit: filtered_dasper
   path ("*.out")                                             , emit: logs
 
   script:
   """
   filter_dasper.R --dasperannotfile ${dasper_file} --librarysize ${library_size} \
                   --min ${params.min_intron} --max ${params.max_intron} --sf ${params.scale_factor} \
-                  --outdir "." &> ${dasper_file}_filterdasper.out
+                  --outdir "." &> ${sample_id}_filterdasper.out
   """
 }
 
