@@ -61,10 +61,6 @@ workflow {
 process DASPER {
   tag "${sample_id}"
 
-  container "${ workflow.containerEngine == 'singularity' ?
-                  'docker://virushunter/dasper:v1.0.0' :
-                  'virushunter/dasper:v1.0.0' }"
-
   publishDir "${params.outdir}/${params.dasper_outdir}", pattern: "*.dasper.tsv", mode: 'copy'
   publishDir "${params.outdir}/${params.dasper_outdir}/outs", pattern: "*.out", mode: 'copy'
 
@@ -86,10 +82,6 @@ process DASPER {
 // Creates a temporary librarysizefile per sample
 process FILTER_DASPER {
   tag "${sample_id}"
-
-  container "${ workflow.containerEngine == 'singularity' ?
-                  'docker://virushunter/dasper:v1.0.0' :
-                  'virushunter/dasper:v1.0.0' }"
 
   publishDir "${params.outdir}/${params.dasper_outdir}", pattern: "*.filtered.tsv", mode: 'copy'
   publishDir "${params.outdir}/${params.dasper_outdir}/outs", pattern: "*.out", mode: 'copy'
@@ -113,10 +105,6 @@ process FILTER_DASPER {
 process NEOJUNCTION {
 
   publishDir "${params.outdir}/", mode: 'copy'
-
-  container "${ workflow.containerEngine == 'singularity' ?
-                  'docker://virushunter/dasper:v1.0.0' :
-                  'virushunter/dasper:v1.0.0' }"
 
   input:
   tuple val(sample_ids), path(filtered_files) // e.g. [ [S18, S19], [/path/to/S18.dasper.tsv.filtered.tsv, /path/to/S19.dasper.tsv.filtered.tsv] ]
