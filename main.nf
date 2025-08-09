@@ -131,7 +131,7 @@ process NEOJUNCTION {
   def metadataRows = sample_ids.withIndex().collect { sample, i -> "${sample},${filtered_files[i]}" }
   def metadataString = (["sample_id,filtered_file"] + metadataRows).join("\\n")
   """
-  echo -e "${metadataString}" > metadata.csv
+  printf "%b\n" "${metadataString}" > metadata.csv
   neojunction.R --metadata metadata.csv --counts_col ${params.counts_col} &> neojunction.out
   """
 }
