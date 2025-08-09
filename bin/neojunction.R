@@ -99,7 +99,8 @@ for (i in seq_len(nrow(metadata))) {
   results = rbind(results, sums)
 }
 
-results = results %>% select(sample, everything())
+results = results %>% select(sample, everything()) %>%
+  arrange(sample)
 
 resultsfilename = paste0("neojunction_results.tsv")
 write_tsv(results, resultsfilename)

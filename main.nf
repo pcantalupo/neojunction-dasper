@@ -44,19 +44,12 @@ workflow {
   /* Convert FILTER_DASPER output channel:
   [S18, /path/to/S18.dasper.tsv.filtered.tsv]
   [S19, /path/to/S19.dasper.tsv.filtered.tsv]
-  Into a single tuple with 2 elements: first is a list of samples and second is a list of the corresp;onding files.
+  Into a single tuple with 2 elements: first is a list of samples and second is a list of the corresponding files.
   [ [S18, S19], [/path/to/S18.dasper.tsv.filtered.tsv, /path/to/S19.dasper.tsv.filtered.tsv] ]
   */
-  combined_filter_dasper_output_ch = FILTER_DASPER.out.filtered_dasper.collect()
-    .map { items ->
-        def samples = []
-        def files = []
-        for (int i = 0; i < items.size(); i += 2) {  // Process pairs: every even index is sample, odd index is file
-            samples.add(items[i])
-            files.add(items[i + 1])
-        }
-        [samples, files]
-    }
+  combined_filter_dasper_output_ch = FILTER_DASPER.out.filtered_dasper
+    .collect(flat: false) // List of [sample_id, path] tuples
+    .map { it.transpose() }
 
   // Run neojunction on all filtered dasper files
   NEOJUNCTION(combined_filter_dasper_output_ch)
